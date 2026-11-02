@@ -1,5 +1,21 @@
 # Makhzoon
 
+> **Project status:** Phase 1 (foundation, authentication, authorization, and database reliability) completed and locally validated. Phase 2 business enhancements are planned; this repository does not claim those features are implemented yet.
+>
+> **Verification:** 34 local tests and 5 PostgreSQL integration tests passed using the isolated test runner. Owner and Staff login and store-scoped access were also checked manually.
+
+## Development milestones
+
+| Milestone | Status | Scope |
+| --- | --- | --- |
+| Initial Retail Inventory Management System | Completed | Core inventory and product workflows |
+| Orders and multi-store reporting | Completed | Transactional orders, per-store stock, reporting |
+| Makhzoon Phase 1 | Completed | Owner/Staff authentication, permissions, CSRF, idempotency, UTC/Cairo dates, database migrations and tests |
+| Makhzoon Phase 2 | Planned | Returns, stock transfers, barcode lookup, product and reporting improvements |
+| Deployment and merchant pilot | Planned | Hosted application, backups, scheduled reports, live operational validation |
+
+**Security note:** Never commit credentials, local `.env` files, or database backups. Previously exposed database and Flask credentials have been rotated. Historical commits may still contain obsolete values; history sanitization is a separate security task.
+
 Makhzoon is a server-rendered Flask application for products, per-store
 inventory, orders, audit history, and business reporting backed by PostgreSQL.
 
