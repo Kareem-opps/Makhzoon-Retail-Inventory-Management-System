@@ -3,140 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Retail Inventory System{% endblock %}</title>
-
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-        rel="stylesheet"
-    >
-    <link
-        href="{{ url_for('static', filename='css/style.css') }}"
-        rel="stylesheet"
-    >
+    <title>{% block title %}Makhzoon{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
-
 <body>
     {% set product_endpoints = ["products", "add_product", "product_details", "edit_product"] %}
+    {% set order_endpoints = ["orders", "add_order", "order_details", "update_order_status", "cancel_order"] %}
+    {% set inventory_endpoints = ["inventory", "product_history"] %}
+    {% set report_endpoints = ["reports", "report_pdf"] %}
+    {% set user_endpoints = ["users", "add_user", "edit_user", "toggle_user_active", "send_user_reset"] %}
     <a class="skip-link" href="#main-content">Skip to main content</a>
 
+    {% if current_user.is_authenticated %}
     <div class="app-shell">
         <aside class="sidebar" id="app-sidebar" aria-label="Primary navigation">
             <div class="sidebar-brand">
-                <span class="temporary-mark" aria-hidden="true">RI</span>
-                <span class="sidebar-brand-text">Retail Inventory</span>
+                <span class="temporary-mark" aria-hidden="true">MZ</span>
+                <span class="sidebar-brand-text">Makhzoon</span>
             </div>
 
             <nav class="sidebar-nav">
                 <p class="sidebar-nav-label">Workspace</p>
                 <ul class="nav flex-column gap-1">
+                    {% if current_user.is_owner %}
                     <li class="nav-item">
-                        <a
-                            class="sidebar-link{% if request.endpoint == 'dashboard' %} active{% endif %}"
-                            href="{{ url_for('dashboard') }}"
-                            {% if request.endpoint == 'dashboard' %}aria-current="page"{% endif %}
-                        >
-                            <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i>
-                            <span>Dashboard</span>
+                        <a class="sidebar-link{% if request.endpoint == 'dashboard' %} active{% endif %}" href="{{ url_for('dashboard') }}" {% if request.endpoint == 'dashboard' %}aria-current="page"{% endif %}>
+                            <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i><span>Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a
-                            class="sidebar-link{% if request.endpoint in product_endpoints %} active{% endif %}"
-                            href="{{ url_for('products') }}"
-                            {% if request.endpoint in product_endpoints %}aria-current="page"{% endif %}
-                        >
-                            <i class="bi bi-box-seam" aria-hidden="true"></i>
-                            <span>Products</span>
+                        <a class="sidebar-link{% if request.endpoint in product_endpoints %} active{% endif %}" href="{{ url_for('products') }}" {% if request.endpoint in product_endpoints %}aria-current="page"{% endif %}>
+                            <i class="bi bi-box-seam" aria-hidden="true"></i><span>Products</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="sidebar-link is-upcoming" href="#" aria-disabled="true" tabindex="-1">
-                            <i class="bi bi-boxes" aria-hidden="true"></i>
-                            <span>Inventory</span>
-                            <span class="upcoming-badge">Soon</span>
+                        <a class="sidebar-link{% if request.endpoint in inventory_endpoints %} active{% endif %}" href="{{ url_for('inventory') }}" {% if request.endpoint in inventory_endpoints %}aria-current="page"{% endif %}>
+                            <i class="bi bi-boxes" aria-hidden="true"></i><span>Inventory</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="sidebar-link{% if request.endpoint in order_endpoints %} active{% endif %}" href="{{ url_for('orders') }}" {% if request.endpoint in order_endpoints %}aria-current="page"{% endif %}>
+                            <i class="bi bi-receipt" aria-hidden="true"></i><span>Orders</span>
+                        </a>
+                    </li>
+                    {% if current_user.is_owner %}
+                    <li class="nav-item">
+                        <a class="sidebar-link{% if request.endpoint in report_endpoints %} active{% endif %}" href="{{ url_for('reports') }}" {% if request.endpoint in report_endpoints %}aria-current="page"{% endif %}>
+                            <i class="bi bi-bar-chart" aria-hidden="true"></i><span>Reports</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="sidebar-link is-upcoming" href="#" aria-disabled="true" tabindex="-1">
-                            <i class="bi bi-receipt" aria-hidden="true"></i>
-                            <span>Orders</span>
-                            <span class="upcoming-badge">Soon</span>
+                        <a class="sidebar-link{% if request.endpoint in user_endpoints %} active{% endif %}" href="{{ url_for('users') }}" {% if request.endpoint in user_endpoints %}aria-current="page"{% endif %}>
+                            <i class="bi bi-people" aria-hidden="true"></i><span>Staff</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="sidebar-link is-upcoming" href="#" aria-disabled="true" tabindex="-1">
-                            <i class="bi bi-bar-chart" aria-hidden="true"></i>
-                            <span>Reports</span>
-                            <span class="upcoming-badge">Soon</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="sidebar-link is-upcoming" href="#" aria-disabled="true" tabindex="-1">
-                            <i class="bi bi-gear" aria-hidden="true"></i>
-                            <span>Settings</span>
-                            <span class="upcoming-badge">Soon</span>
-                        </a>
-                    </li>
+                    {% endif %}
                 </ul>
             </nav>
 
             <div class="sidebar-footer">
                 <span class="status-dot" aria-hidden="true"></span>
-                <span>Dashboard foundation</span>
+                <span>{{ current_user.username }} · {{ current_user.role|title }}</span>
             </div>
         </aside>
 
-        <button
-            class="sidebar-backdrop"
-            type="button"
-            data-sidebar-dismiss
-            aria-label="Close navigation menu"
-            tabindex="-1"
-        ></button>
+        <button class="sidebar-backdrop" type="button" data-sidebar-dismiss aria-label="Close navigation menu" tabindex="-1"></button>
 
         <div class="app-content">
             <header class="topbar">
-                <button
-                    class="sidebar-toggle"
-                    type="button"
-                    data-sidebar-toggle
-                    aria-controls="app-sidebar"
-                    aria-expanded="false"
-                    aria-label="Open navigation menu"
-                >
+                <button class="sidebar-toggle" type="button" data-sidebar-toggle aria-controls="app-sidebar" aria-expanded="false" aria-label="Open navigation menu">
                     <i class="bi bi-list" aria-hidden="true"></i>
                 </button>
-
                 <div class="topbar-context">
-                    <span class="topbar-label">Retail Inventory Management</span>
+                    <span class="topbar-label">Makhzoon</span>
                     <span class="topbar-divider" aria-hidden="true"></span>
                     <span class="topbar-section">
-                        {% if request.endpoint in product_endpoints %}Products{% else %}Dashboard{% endif %}
+                        {% if request.endpoint in product_endpoints %}Products
+                        {% elif request.endpoint in order_endpoints %}Orders
+                        {% elif request.endpoint in inventory_endpoints %}Inventory
+                        {% elif request.endpoint in report_endpoints %}Reports
+                        {% elif request.endpoint in user_endpoints %}Staff
+                        {% else %}Dashboard
+                        {% endif %}
                     </span>
                 </div>
+                <form class="ms-auto" method="post" action="{{ url_for('logout') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm btn-outline-secondary" type="submit">Sign out</button>
+                </form>
             </header>
+    {% endif %}
 
-            <main class="main-content" id="main-content" tabindex="-1">
-                <div class="container-fluid">
+            <main class="{% if current_user.is_authenticated %}main-content{% else %}main-content min-vh-100 d-flex align-items-center{% endif %}" id="main-content" tabindex="-1">
+                <div class="{% if current_user.is_authenticated %}container-fluid{% else %}container{% endif %}">
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             <div class="flash-stack" aria-live="polite">
                                 {% for category, message in messages %}
-                                    <div
-                                        class="alert alert-{{ category if category in ['success', 'danger', 'warning', 'info'] else 'info' }} alert-dismissible fade show"
-                                        role="alert"
-                                    >
+                                    <div class="alert alert-{{ category if category in ['success', 'danger', 'warning', 'info'] else 'info' }} alert-dismissible fade show" role="alert">
                                         {{ message }}
-                                        <button
-                                            type="button"
-                                            class="btn-close"
-                                            data-bs-dismiss="alert"
-                                            aria-label="Close"
-                                        ></button>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                     </div>
                                 {% endfor %}
                             </div>
@@ -145,12 +114,13 @@
                     {% block content %}{% endblock %}
                 </div>
             </main>
+
+    {% if current_user.is_authenticated %}
         </div>
     </div>
+    {% endif %}
 
-    <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

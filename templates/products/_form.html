@@ -1,147 +1,66 @@
 <div class="card product-form-card">
-    <div class="card-body">
-        {% if errors %}
-            <div class="alert alert-danger" role="alert">
-                <div class="d-flex gap-2">
-                    <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
-                    <div>
-                        <strong>Check the highlighted fields.</strong>
-                        <div>Please correct the errors below and submit the form again.</div>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
-
-        <form method="post">
-            <div class="row g-4">
-                <div class="col-12 col-md-6">
-                    <label class="form-label" for="product-name">
-                        Name <span class="required-indicator" aria-hidden="true">*</span>
-                    </label>
-                    <input
-                        class="form-control{% if errors.name %} is-invalid{% endif %}"
-                        id="product-name"
-                        name="name"
-                        type="text"
-                        value="{{ form_values.name }}"
-                        maxlength="100"
-                        autocomplete="off"
-                        required
-                    >
-                    {% if errors.name %}
-                        <div class="invalid-feedback">{{ errors.name }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label" for="product-category">
-                        Category <span class="required-indicator" aria-hidden="true">*</span>
-                    </label>
-                    <input
-                        class="form-control{% if errors.category %} is-invalid{% endif %}"
-                        id="product-category"
-                        name="category"
-                        type="text"
-                        value="{{ form_values.category }}"
-                        maxlength="100"
-                        autocomplete="off"
-                        required
-                    >
-                    {% if errors.category %}
-                        <div class="invalid-feedback">{{ errors.category }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label" for="product-supplier">
-                        Supplier <span class="required-indicator" aria-hidden="true">*</span>
-                    </label>
-                    <input
-                        class="form-control{% if errors.supplier %} is-invalid{% endif %}"
-                        id="product-supplier"
-                        name="supplier"
-                        type="text"
-                        value="{{ form_values.supplier }}"
-                        maxlength="100"
-                        autocomplete="off"
-                        required
-                    >
-                    {% if errors.supplier %}
-                        <div class="invalid-feedback">{{ errors.supplier }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label" for="product-price">
-                        Price (EGP) <span class="required-indicator" aria-hidden="true">*</span>
-                    </label>
-                    <input
-                        class="form-control{% if errors.price %} is-invalid{% endif %}"
-                        id="product-price"
-                        name="price"
-                        type="number"
-                        value="{{ form_values.price }}"
-                        min="0"
-                        step="any"
-                        inputmode="decimal"
-                        required
-                    >
-                    {% if errors.price %}
-                        <div class="invalid-feedback">{{ errors.price }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label" for="product-quantity">
-                        Quantity <span class="required-indicator" aria-hidden="true">*</span>
-                    </label>
-                    <input
-                        class="form-control{% if errors.quantity %} is-invalid{% endif %}"
-                        id="product-quantity"
-                        name="quantity"
-                        type="number"
-                        value="{{ form_values.quantity }}"
-                        min="0"
-                        step="1"
-                        inputmode="numeric"
-                        required
-                    >
-                    {% if errors.quantity %}
-                        <div class="invalid-feedback">{{ errors.quantity }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label" for="product-reorder-level">
-                        Reorder Level <span class="required-indicator" aria-hidden="true">*</span>
-                    </label>
-                    <input
-                        class="form-control{% if errors.reorder_level %} is-invalid{% endif %}"
-                        id="product-reorder-level"
-                        name="reorder_level"
-                        type="number"
-                        value="{{ form_values.reorder_level }}"
-                        min="0"
-                        step="1"
-                        inputmode="numeric"
-                        required
-                    >
-                    {% if errors.reorder_level %}
-                        <div class="invalid-feedback">{{ errors.reorder_level }}</div>
-                    {% endif %}
-                    <div class="form-text">
-                        The product is considered low stock at or below this quantity.
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <button class="btn btn-primary" type="submit">
-                    <i class="bi bi-check-lg" aria-hidden="true"></i>
-                    {{ submit_label }}
-                </button>
-                <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Cancel</a>
-            </div>
-        </form>
+<div class="card-body">
+{% if errors %}
+<div class="alert alert-danger">Check the highlighted fields and try again.</div>
+{% endif %}
+<form method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-4">
+    {% for field, label in [('name','Name'),('category','Category'),('supplier','Supplier')] %}
+    <div class="col-12 col-md-4">
+<label class="form-label" for="product-{{ field }}">{{ label }} *</label>
+      <input class="form-control{% if errors.get(field) %} is-invalid{% endif %}" id="product-{{ field }}" name="{{ field }}" value="{{ form_values[field] }}" maxlength="100" required>
+      {% if errors.get(field) %}
+<div class="invalid-feedback">{{ errors[field] }}</div>
+{% endif %}
     </div>
+{% endfor %}
+    {% for field, label in [('purchase_price','Purchase cost'),('wholesale_price','Wholesale'),('semi_wholesale_price','Semi-wholesale'),('retail_price','Retail')] %}
+    <div class="col-12 col-sm-6 col-lg-3">
+<label class="form-label" for="{{ field }}">{{ label }} (EGP) *</label>
+      <input class="form-control{% if errors.get(field) %} is-invalid{% endif %}" id="{{ field }}" name="{{ field }}" type="number" min="0" step="0.01" value="{{ form_values[field] }}" required>
+      {% if errors.get(field) %}
+<div class="invalid-feedback">{{ errors[field] }}</div>
+{% endif %}
+    </div>
+{% endfor %}
+    <div class="col-12 col-md-4">
+<label class="form-label" for="product-reorder-level">Reorder Level *</label>
+      <input class="form-control{% if errors.reorder_level %} is-invalid{% endif %}" id="product-reorder-level" name="reorder_level" type="number" min="0" step="1" value="{{ form_values.reorder_level }}" required>
+      {% if errors.reorder_level %}
+<div class="invalid-feedback">{{ errors.reorder_level }}</div>
+{% endif %}
+    </div>
+    <div class="col-12 col-md-8">
+<label class="form-label" for="adjustment_type">Reason for stock increases</label>
+      <select class="form-select" id="adjustment_type" name="adjustment_type">
+<option value="purchase" {% if form_values.adjustment_type == 'purchase' %}selected{% endif %}>Purchased / restocked inventory</option>
+<option value="correction" {% if form_values.adjustment_type == 'correction' %}selected{% endif %}>Manual correction (not a purchase)</option>
+</select>
+      <div class="form-text">This distinction keeps cumulative acquisition cost accurate.</div>
+    </div>
+  </div>
+<hr class="my-4">
+<h2 class="h6">Quantity by store</h2>
+  {% if stores %}
+<div class="row g-3">
+{% for store in stores %}
+<div class="col-12 col-sm-6 col-lg-4">
+<label class="form-label" for="inventory-{{ store.id }}">{{ store.name }}</label>
+    <input class="form-control{% if errors.get('inventory_' ~ store.id) %} is-invalid{% endif %}" id="inventory-{{ store.id }}" name="inventory_{{ store.id }}" type="number" min="0" step="1" value="{{ form_values.inventories.get(store.id, '0') }}" required>
+    {% if errors.get('inventory_' ~ store.id) %}
+<div class="invalid-feedback">{{ errors['inventory_' ~ store.id] }}</div>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+  {% else %}
+<div class="alert alert-warning mb-0">Add a store from the Products page before assigning stock.</div>
+{% endif %}
+  <div class="form-actions">
+<button class="btn btn-primary" type="submit">{{ submit_label }}</button>
+<a class="btn btn-outline-secondary" href="{{ cancel_url }}">Cancel</a>
+</div>
+</form>
+</div>
 </div>

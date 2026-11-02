@@ -1,86 +1,105 @@
 {% extends "base.html" %}
-
-
-{% block title %}
-Dashboard | Retail Inventory System
-{% endblock %}
-
-
+{% block title %}Dashboard | Makhzoon{% endblock %}
 {% block content %}
-    <section aria-labelledby="dashboard-heading">
-        <div class="page-header">
-            <div>
-                <p class="page-eyebrow">Overview</p>
-                <h1 id="dashboard-heading">Dashboard</h1>
-                <p class="page-description">
-                    Monitor the current state of products, inventory, and orders at a glance.
-                </p>
-            </div>
-        </div>
-
-        <div class="row g-4" aria-label="Inventory key performance indicators">
-            <div class="col-12 col-sm-6 col-xl-3">
-                <article class="card kpi-card h-100">
-                    <div class="card-body">
-                        <div class="kpi-card-header">
-                            <div class="kpi-icon" aria-hidden="true">
-                                <i class="bi bi-box-seam"></i>
-                            </div>
-                            <span class="kpi-label">Total Products</span>
-                        </div>
-                        <p class="kpi-value">{{ total_products }}</p>
-                        <p class="kpi-note">Products currently recorded</p>
-                    </div>
-                </article>
-            </div>
-
-            <div class="col-12 col-sm-6 col-xl-3">
-                <article class="card kpi-card h-100">
-                    <div class="card-body">
-                        <div class="kpi-card-header">
-                            <div class="kpi-icon" aria-hidden="true">
-                                <i class="bi bi-cash-stack"></i>
-                            </div>
-                            <span class="kpi-label">Inventory Value</span>
-                        </div>
-                        <p class="kpi-value kpi-value-currency">
-                            <span class="currency-label">EGP</span>
-                            {{ "{:,.2f}".format(inventory_value) }}
-                        </p>
-                        <p class="kpi-note">Current value of stock on hand</p>
-                    </div>
-                </article>
-            </div>
-
-            <div class="col-12 col-sm-6 col-xl-3">
-                <article class="card kpi-card kpi-card-warning h-100">
-                    <div class="card-body">
-                        <div class="kpi-card-header">
-                            <div class="kpi-icon kpi-icon-warning" aria-hidden="true">
-                                <i class="bi bi-exclamation-triangle"></i>
-                            </div>
-                            <span class="kpi-label">Low Stock Products</span>
-                        </div>
-                        <p class="kpi-value">{{ low_stock_products }}</p>
-                        <p class="kpi-note">Products at or below reorder level</p>
-                    </div>
-                </article>
-            </div>
-
-            <div class="col-12 col-sm-6 col-xl-3">
-                <article class="card kpi-card h-100">
-                    <div class="card-body">
-                        <div class="kpi-card-header">
-                            <div class="kpi-icon" aria-hidden="true">
-                                <i class="bi bi-receipt"></i>
-                            </div>
-                            <span class="kpi-label">Total Orders</span>
-                        </div>
-                        <p class="kpi-value">{{ total_orders }}</p>
-                        <p class="kpi-note">Orders currently recorded</p>
-                    </div>
-                </article>
-            </div>
-        </div>
-    </section>
+<section>
+<div class="page-header">
+<div>
+<p class="page-eyebrow">Overview</p>
+<h1>Dashboard</h1>
+<p class="page-description">Current operational and sales signals.</p>
+</div>
+</div>
+<div class="row g-3">
+{% for label,value,note,icon in [('Total Products',total_products,'Catalog records','box-seam'),('Total Orders',total_orders,'All historical orders','receipt'),('Low Stock',low_stock_products,'At or below reorder level','exclamation-triangle'),('Inventory Value','EGP {:,.2f}'.format(inventory_value),'Known cumulative acquisition cost','cash-stack'),('Total Sales','EGP {:,.2f}'.format(total_sales),'All non-cancelled revenue','graph-up'),('Monthly Sales','EGP {:,.2f}'.format(monthly_sales),'Current calendar month','calendar3')] %}
+<div class="col-12 col-sm-6 col-xl-4">
+<article class="card kpi-card h-100">
+<div class="card-body">
+<div class="kpi-card-header">
+<div class="kpi-icon">
+<i class="bi bi-{{ icon }}">
+</i>
+</div>
+<span class="kpi-label">{{ label }}</span>
+</div>
+<p class="kpi-value">{{ value }}</p>
+<p class="kpi-note">{{ note }}</p>
+</div>
+</article>
+</div>
+{% endfor %}
+</div>
+<div class="row g-4 mt-1">
+<div class="col-12 col-xl-6">
+<div class="card content-card h-100">
+<div class="card-header section-card-header">
+<h2>Top 5 products · last 5 days</h2>
+</div>
+<ol class="list-group list-group-numbered list-group-flush">
+{% for row in top_products %}
+<li class="list-group-item d-flex justify-content-between">
+<span>{{ row.name }}</span>
+<strong>{{ row.units }} units</strong>
+</li>
+{% else %}
+<li class="list-group-item text-muted">No sales in this period.</li>
+{% endfor %}
+</ol>
+</div>
+</div>
+<div class="col-12 col-xl-6">
+<div class="card content-card h-100">
+<div class="card-header section-card-header">
+<h2>Bottom 5 sold products · last 5 days</h2>
+</div>
+<ol class="list-group list-group-numbered list-group-flush">
+{% for row in bottom_products %}
+<li class="list-group-item d-flex justify-content-between">
+<span>{{ row.name }}</span>
+<strong>{{ row.units }} units</strong>
+</li>
+{% else %}
+<li class="list-group-item text-muted">Zero-sale products are analyzed in Reports.</li>
+{% endfor %}
+</ol>
+</div>
+</div>
+</div>
+<div class="card content-card mt-4">
+<div class="card-header section-card-header">
+<h2>Yesterday's sales</h2>
+</div>
+<div class="table-responsive">
+<table class="table mb-0">
+<thead>
+<tr>
+<th>Product</th>
+<th>Qty</th>
+<th>Price</th>
+<th>Store</th>
+<th>Order</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+{% for item,order,product,store in yesterday_sales %}
+<tr>
+<td>{{ product.name }}</td>
+<td>{{ item.quantity }}</td>
+<td>EGP {{ '{:,.2f}'.format(item.unit_price) }}</td>
+<td>{{ store.name if store else 'Legacy / Unknown' }}</td>
+<td>
+<a href="{{ url_for('order_details',order_id=order.id) }}">#{{ order.id }}</a>
+</td>
+<td>{{ order.order_date|local_datetime('%H:%M') }}</td>
+</tr>
+{% else %}
+<tr>
+<td colspan="6" class="text-center text-muted py-4">No non-cancelled sales yesterday.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
 {% endblock %}

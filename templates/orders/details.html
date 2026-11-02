@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }} | Makhzoon{% endblock %}
+{% block content %}
+<section>
+<div class="page-header">
+<div>
+<p class="page-eyebrow">Order details</p>
+<h1>Order #{{ order.id }}</h1>
+<p class="page-description">{{ order.store.name if order.store else 'Legacy order - original store unknown' }} · {{ order.order_date|local_datetime }}</p>
+</div>
+<span class="badge {{ status_badge }}">{{ order.status }}</span>
+</div>
+<div class="row g-4">
+<div class="col-12 col-xl-4">
+<div class="card content-card">
+<div class="card-header section-card-header">
+<h2>Customer</h2>
+</div>
+<div class="card-body">
+<dl class="order-meta-list">
+<dt>Name</dt>
+<dd>{{ order.customer_name }}</dd>
+<dt>Phone</dt>
+<dd>{{ order.customer_phone or 'Not provided' }}</dd>
+<dt>Email</dt>
+<dd>{{ order.customer_email or 'Not provided' }}</dd>
+<dt>Notes</dt>
+<dd>{{ order.notes or 'No notes' }}</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="col-12 col-xl-8">
+<div class="card content-card">
+<div class="table-responsive">
+<table class="table order-detail-table mb-0">
+<thead>
+<tr>
+<th>Product</th>
+<th>Tier</th>
+<th>Qty</th>
+<th>Historical price</th>
+{% if current_user.is_owner %}<th>Cost snapshot</th>{% endif %}
+<th>Subtotal</th>
+</tr>
+</thead>
+<tbody>
+{% for item in order.items %}
+<tr>
+<td>{{ item.product.name }}</td>
+<td>{{ price_tier_labels.get(item.price_tier,'Legacy / Unknown') }}</td>
+<td>{{ item.quantity }}</td>
+<td>EGP {{ '{:,.2f}'.format(item.unit_price) }}</td>
+{% if current_user.is_owner %}<td>
+{% if item.purchase_unit_cost is not none %}EGP {{ '{:,.2f}'.format(item.purchase_unit_cost) }}
+{% else %}Unknown{% endif %}
+</td>{% endif %}
+<td>EGP {{ '{:,.2f}'.format(item.subtotal) }}</td>
+</tr>
+{% endfor %}
+</tbody>
+<tfoot>
+<tr>
+<th colspan="{{ 5 if current_user.is_owner else 4 }}">Grand total</th>
+<td>EGP {{ '{:,.2f}'.format(order.get_total()) }}</td>
+</tr>
+</tfoot>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="detail-actions">
+<a class="btn btn-outline-secondary" href="{{ url_for('orders') }}">Back</a>
+{% if 'Processing' in available_transitions %}
+<form method="post" action="{{ url_for('update_order_status',order_id=order.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="status" value="Processing">
+<button class="btn btn-primary">Start Processing</button>
+</form>
+{% endif %}
+{% if 'Completed' in available_transitions %}
+<form method="post" action="{{ url_for('update_order_status',order_id=order.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="status" value="Completed">
+<button class="btn btn-success">Mark Completed</button>
+</form>
+{% endif %}
+{% if current_user.is_owner and 'Cancelled' in available_transitions and order.store_id %}
+<form method="post" action="{{ url_for('cancel_order',order_id=order.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<button class="btn btn-outline-danger">Cancel and Restore Stock</button>
+</form>
+{% endif %}
+</div>
+</section>
+{% endblock %}

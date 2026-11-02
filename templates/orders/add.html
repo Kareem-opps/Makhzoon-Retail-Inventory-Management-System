@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "orders/_item_row.html" import order_item_row with context %}
+{% block title %}Create Order | Makhzoon{% endblock %}
+{% block content %}
+<section>
+<div class="page-header">
+<div>
+<p class="page-eyebrow">Order management</p>
+<h1>Create Order</h1>
+<p class="page-description">Choose the selling store and an explicit price tier for every item.</p>
+</div>
+</div>
+{% if errors %}
+<div class="alert alert-danger">The order was not created. No inventory was changed.</div>
+{% endif %}
+<form method="post" data-order-form data-inventory='{{ inventory_map|tojson }}'>
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" name="submission_token" value="{{ form_values.submission_token }}">
+{% if errors.submission_token %}<div class="alert alert-danger">{{ errors.submission_token }}</div>{% endif %}
+<div class="card content-card order-form-section">
+<div class="card-header section-card-header">
+<h2>Order information</h2>
+</div>
+<div class="card-body">
+<div class="row g-3">
+<div class="col-12 col-md-4">
+<label class="form-label">Selling store *</label>
+<select class="form-select{% if errors.store_id %} is-invalid{% endif %}" name="store_id" data-store-select required>
+<option value="">Select store</option>
+{% for store in stores %}
+<option value="{{ store.id }}" {% if store.id|string == form_values.store_id %}selected{% endif %}>{{ store.name }}</option>
+{% endfor %}
+</select>
+{% if errors.store_id %}
+<div class="invalid-feedback">{{ errors.store_id }}</div>
+{% endif %}
+</div>
+<div class="col-12 col-md-4">
+<label class="form-label">Customer name *</label>
+<input class="form-control{% if errors.customer_name %} is-invalid{% endif %}" name="customer_name" value="{{ form_values.customer_name }}" maxlength="100" required>
+{% if errors.customer_name %}
+<div class="invalid-feedback">{{ errors.customer_name }}</div>
+{% endif %}
+</div>
+<div class="col-12 col-md-4">
+<label class="form-label">Phone</label>
+<input class="form-control" name="customer_phone" value="{{ form_values.customer_phone }}" maxlength="20">
+</div>
+<div class="col-12 col-md-6">
+<label class="form-label">Email</label>
+<input class="form-control{% if errors.customer_email %} is-invalid{% endif %}" name="customer_email" type="email" value="{{ form_values.customer_email }}">
+{% if errors.customer_email %}
+<div class="invalid-feedback">{{ errors.customer_email }}</div>
+{% endif %}
+</div>
+<div class="col-12 col-md-6">
+<label class="form-label">Notes</label>
+<input class="form-control" name="notes" value="{{ form_values.notes }}">
+</div>
+</div>
+</div>
+</div>
+<div class="card content-card order-form-section">
+<div class="card-header section-card-header">
+<div>
+<h2>Items</h2>
+<p>Server-side stock checks run under row locks.</p>
+</div>
+<button class="btn btn-sm btn-outline-secondary" type="button" data-add-order-item>Add Product</button>
+</div>
+<div class="card-body">
+{% if errors.get('items') %}
+<div class="alert alert-danger py-2">{{ errors.get('items') }}</div>
+{% endif %}
+<div data-order-items>
+{% for row in form_values['items'] %}{{ order_item_row(products,row) }}
+{% endfor %}
+</div>
+<template data-order-item-template>{{ order_item_row(products,{'product_id':'','quantity':'1','price_tier':'retail','errors':{}}) }}</template>
+<div class="order-total-preview">
+<span>Total</span>
+<strong data-order-total>EGP 0.00</strong>
+</div>
+</div>
+</div>
+<div class="form-actions">
+<button class="btn btn-primary" type="submit" data-order-submit {% if not products or not stores %}disabled{% endif %}>Create Order</button>
+<a class="btn btn-outline-secondary" href="{{ url_for('orders') }}">Cancel</a>
+</div>
+</form>
+</section>
+{% endblock %}
