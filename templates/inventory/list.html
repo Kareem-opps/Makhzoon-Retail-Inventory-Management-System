@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Inventory | Makhzoon{% endblock %}
+{% block content %}
+<section>
+<div class="page-header">
+<div>
+<p class="page-eyebrow">Read-only monitoring</p>
+<h1>Inventory</h1>
+<p class="page-description">Availability and purchase-cost history. Edit quantities only in Product Management.</p>
+</div>
+<div class="text-end">
+<span class="text-muted small">Known cumulative purchase cost</span>
+<div class="h4 mb-0">EGP {{ '{:,.2f}'.format(known_purchase_cost) }}</div>
+</div>
+</div>
+<div class="card filter-panel">
+<div class="card-body">
+<form method="get">
+<div class="row g-3">
+<div class="col-8">
+<input class="form-control" name="search" value="{{ search }}" placeholder="Search product">
+</div>
+<div class="col-4">
+<select class="form-select" name="store_id">
+<option value="">All stores</option>
+{% for store in stores %}
+<option value="{{ store.id }}" {% if store.id|string == selected_store_id %}selected{% endif %}>{{ store.name }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+</form>
+</div>
+</div>
+<div class="card content-card">
+<div class="table-responsive">
+<table class="table mb-0">
+<thead>
+<tr>
+<th>Product</th>
+<th>By store</th>
+<th>Total</th>
+<th>Status</th>
+<th>Recorded purchase price</th>
+<th>History</th>
+</tr>
+</thead>
+<tbody>
+{% for product in products %}
+<tr>
+<td>{{ product.name }}</td>
+<td>
+{% for row in product.store_inventories %}
+<span class="store-stock-chip">{{ row.store.name }}: {{ row.quantity }}</span>
+{% endfor %}
+</td>
+<td>{{ product.quantity }}</td>
+<td>
+<span class="badge {{ stock_statuses[product.id].badge_class }}">{{ stock_statuses[product.id].label }}</span>
+</td>
+<td>EGP {{ '{:,.2f}'.format(product.purchase_price) }}</td>
+<td>
+<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('product_history',product_id=product.id) }}">Timeline</a>
+</td>
+</tr>
+{% else %}
+<tr>
+<td colspan="6" class="text-center py-5">No matching inventory.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+{% endblock %}

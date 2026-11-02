@@ -1,166 +1,242 @@
-# 🛒 Retail Inventory Management System
+# Makhzoon
 
-A Flask-based retail inventory management system built with PostgreSQL, SQLAlchemy, HTML, CSS, and JavaScript.
+Makhzoon is a server-rendered Flask application for products, per-store
+inventory, orders, audit history, and business reporting backed by PostgreSQL.
 
-The project is being developed in structured groups. Group 1 and Group 2 are now complete and include the dashboard and full product management workflow.
+## Architecture
 
----
+The project intentionally remains a straightforward Flask monolith:
 
-## ✅ Current Progress
+- `app.py` initializes Flask and contains routes, validation, authentication,
+  authorization, and transactional workflows.
+- `models.py` contains the Flask-SQLAlchemy models and relationships.
+- `analytics.py` builds reporting metrics and explainable recommendations.
+- `reporting.py` renders PDFs and provides explicitly enabled SMTP delivery.
+- `report_scheduler.py` is the external scheduled-report entry point.
+- Jinja templates and Bootstrap provide the server-rendered interface.
+- PostgreSQL is the persistent store and source of truth.
 
-- ✅ Group 1 — Dashboard
-- ✅ Group 2 — Product Management
-- ⏳ Group 3 — Order Management
-- ⬜ Group 4 — Authentication and User Management
-- ⬜ Group 5 — Reports and Analytics
-- ⬜ Group 6 — Deployment and Final UI/UX Improvements
+`store_inventory.quantity` is authoritative stock. `products.quantity` is a
+synchronized compatibility total. Order lines preserve historical selling
+prices and known purchase-cost snapshots.
 
----
+## Phase 1 security model
 
-## 🚀 Implemented Features
+- Email/password authentication uses Flask-Login and Werkzeug password hashes.
+- Sessions last 12 hours and use HttpOnly, SameSite=Lax cookies. Set
+  `SESSION_COOKIE_SECURE=true` whenever HTTPS is used.
+- State-changing forms use a session CSRF token.
+- Login throttling is database-backed.
+- Password-reset links are single-use and expire; only token digests are stored.
+- There is no public registration.
+- Owners can use all business and administration features.
+- Staff can create and view orders only for assigned stores and can move orders
+  forward from Pending to Processing to Completed.
+- Staff cannot view purchase costs, inventory management, dashboard metrics,
+  reports, PDFs, store configuration, user management, or cancellation actions.
+- Order submission tokens and a database unique constraint prevent duplicate
+  orders and duplicate stock deductions.
 
-### Dashboard
-
-- Total products KPI
-- Inventory value KPI
-- Low-stock KPI
-- Total orders KPI
-- Responsive sidebar navigation
-- Flash-message support
-
-### Product Management
-
-- View all products
-- Add a new product
-- View product details
-- Edit product information
-- Delete products using POST requests
-- Protect products referenced by orders from deletion
-- Search by product information
-- Filter by category
-- Filter by supplier
-- Filter by stock status
-- Safe sorting using an allowlist
-- Shared validation for Add and Edit forms
-- Stock-status badges:
-  - In Stock
-  - Low Stock
-  - Out of Stock
-- Database rollback handling when an operation fails
-- Reusable form and delete-modal templates
-
----
-
-## 🛠️ Technologies Used
-
-- Python
-- Flask
-- Flask-SQLAlchemy
-- SQLAlchemy
-- PostgreSQL
-- pgAdmin 4
-- Jinja2
-- HTML5
-- CSS3
-- JavaScript
-- Git and GitHub
-
----
-
-## 📂 Project Structure
+## Project layout
 
 ```text
-├── app.py
-├── config.py
-├── models.py
-├── requirements.txt
-├── test_db.py
-├── static/
-│   ├── css/
-│   │   └── style.css
-│   └── js/
-│       └── main.js
-├── templates/
-│   ├── base.html
-│   ├── dashboard.html
-│   ├── home.html
-│   └── products/
-│       ├── _delete_modal.html
-│       ├── _form.html
-│       ├── add.html
-│       ├── details.html
-│       ├── edit.html
-│       └── list.html
-└── screenshots/
+.
+|-- app.py
+|-- models.py
+|-- config.py
+|-- time_utils.py
+|-- analytics.py
+|-- reporting.py
+|-- report_scheduler.py
+|-- migrations/
+|   |-- 000_baseline_post_004.sql
+|   |-- 003_order_management.sql
+|   |-- 004_multistore_reporting.sql
+|   `-- 005_authentication_security.sql
+|-- scripts/
+|-- static/
+|-- templates/
+|   |-- auth/
+|   |-- inventory/
+|   |-- orders/
+|   |-- products/
+|   |-- reports/
+|   `-- users/
+|-- tests/
+|   |-- test_orders.py
+|   |-- test_inventory_reporting.py
+|   |-- test_security_auth.py
+|   |-- test_timezone.py
+|   `-- test_postgres_integration.py
+|-- .env.example
+|-- .gitignore
+`-- requirements.txt
 ```
 
----
+Local environment files, editor settings, caches, generated reports, SQLite
+files, and database backups/exports are excluded from Git.
 
-## 🔗 Main Routes
+## Installation
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+```
+
+Edit `.env` locally. At minimum, provide `DATABASE_URL`, a long random
+`SECRET_KEY`, and `BUSINESS_TIMEZONE=Africa/Cairo`. Never commit `.env` or put
+credentials in source. `config.py` loads the project-local file for direct
+execution, Flask CLI, scripts, and VS Code. PostgreSQL sessions use UTC.
+
+## PostgreSQL initialization and migrations
+
+The baseline is a reviewed, data-free schema representing the application after
+migration 004. It contains all post-004 tables, constraints, indexes, and the
+inventory synchronization function/trigger.
+
+For a brand-new empty PostgreSQL database, apply only:
 
 ```text
-GET         /
-GET         /dashboard
-GET         /products
-GET, POST   /products/add
-GET         /products/<id>
-GET, POST   /products/<id>/edit
-POST        /products/<id>/delete
+000_baseline_post_004.sql
+005_authentication_security.sql
+future migrations in numeric order
 ```
 
----
+Do not apply migrations 003 or 004 after the baseline; their final effects are
+already included.
 
-## 📦 Stock Status Rules
+After independently creating and confirming an empty target database, initialize
+it with PostgreSQL's client (use a dedicated URL, never the working database URL):
+
+```powershell
+$env:NEW_DATABASE_URL = "postgresql://USER:PASSWORD@localhost:5432/makhzoon_new"
+psql $env:NEW_DATABASE_URL -v ON_ERROR_STOP=1 -f migrations/000_baseline_post_004.sql
+psql $env:NEW_DATABASE_URL -v ON_ERROR_STOP=1 -f migrations/005_authentication_security.sql
+Remove-Item Env:NEW_DATABASE_URL
+```
+
+The baseline is intentionally strict and fails if its objects already exist.
+
+For a legacy database that predates migration 003, use:
 
 ```text
-quantity == 0
-→ Out of Stock
-
-0 < quantity <= reorder_level
-→ Low Stock
-
-quantity > reorder_level
-→ In Stock
+003_order_management.sql
+004_multistore_reporting.sql
+005_authentication_security.sql
+future migrations in numeric order
 ```
 
----
+For an existing database already at migration 004, apply migration 005 next.
+Always back up, confirm the target, and test against a copy first. The application
+never runs migrations automatically. A read-only target/schema check is available:
 
-## 📸 Screenshots
+```powershell
+python scripts/verify_postgres.py
+```
 
-### Dashboard
+The application never applies migration 005 automatically. Confirm the target
+schema and maintain a tested backup before applying migrations in any new
+environment. Legacy users remain valid but receive the least-privileged Staff
+role and a nullable email; designate a real Owner explicitly with the CLI.
 
-![Dashboard](screenshots/Dashboard.png)
+## First Owner and administrative recovery
 
-### Products List
+After the schema includes migration 005:
 
-![Products](screenshots/Products.png)
+```powershell
+$env:FLASK_APP = "app.py"
+flask create-owner
+```
 
-### Add Product
+The command prompts for email, username, and a hidden confirmed password. It does
+not create a default password. If email recovery is unavailable:
 
-![Add Product](screenshots/Add%20Product.png)
+```powershell
+flask reset-owner-password
+```
 
-### Product Details
+That command also uses a hidden password prompt and is not exposed as a web route.
 
-![Product Details](screenshots/Products%20Details.png)
+## Start the application
 
----
+```powershell
+python app.py
+```
 
-## 🧭 Next Step — Group 3
+or:
 
-Group 3 will focus on Order Management:
+```powershell
+$env:FLASK_APP = "app.py"
+flask run
+```
 
-- Orders list
-- Create an order
-- Add multiple products to an order
-- Calculate totals automatically
-- Validate requested quantities
-- Reduce product stock after completing an order
-- View order details
-- Manage order status
-- Preserve order history
+Open `http://127.0.0.1:5000`. Unauthenticated users are redirected to `/login`.
+Owners land on the dashboard and Staff land on the order workspace.
 
----
+## Password-reset email
 
-## 👨‍💻 Author
+Authentication email is disabled unless `ENABLE_AUTH_EMAIL=true`. Configure
+`SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`, optional credentials, and TLS settings in
+the local environment. Set `PUBLIC_BASE_URL` to the trusted application origin
+(for example, `https://inventory.example.com`) so reset links never depend on an
+untrusted request Host header. Automated tests mock delivery and never send real email.
+Scheduled report email remains independently controlled by
+`ENABLE_REPORT_EMAIL`.
 
-Kareem Abdelrhman
+## Tests
+
+SQLite regression, security, CSRF, role, and timezone tests:
+
+```powershell
+python -m pytest -q --ignore=tests/test_postgres_integration.py
+```
+
+The PostgreSQL concurrency suite is separately opt-in and must use a dedicated
+disposable database. It refuses to run unless the database name contains `test`,
+the target differs from `DATABASE_URL`, and explicit opt-in is present:
+
+```powershell
+$env:TEST_DATABASE_URL = "postgresql+psycopg2://USER:PASSWORD@localhost:5432/makhzoon_test"
+$env:RUN_POSTGRES_INTEGRATION = "1"
+python -m unittest discover -s tests -p "test_postgres_integration.py" -v
+```
+
+The suite creates and drops only a randomly named `makhzoon_it_<uuid>` schema
+inside that verified test database. Never point `TEST_DATABASE_URL` at the
+working database.
+
+Do not run plain `python -m pytest -q` with PostgreSQL integration enabled.
+Pytest can import the local test modules first, while the PostgreSQL suite
+intentionally requires a clean `app`/`models`/`config` module registry. Use the
+isolated combined runner instead; it launches both suites in separate Python
+processes and returns a single combined exit status:
+
+```powershell
+$env:TEST_DATABASE_URL = "postgresql+psycopg2://USER:PASSWORD@localhost:5432/makhzoon_test"
+$env:RUN_POSTGRES_INTEGRATION = "1"
+python scripts/run_tests.py
+```
+
+## Reports and scheduler
+
+Owners can use `/reports`; PDFs are produced in memory. Email delivery stays
+disabled unless explicitly configured. Run the scheduler once per day through
+Windows Task Scheduler or cron:
+
+```powershell
+python report_scheduler.py
+```
+
+It calculates due dates in `Africa/Cairo` and queries UTC database boundaries.
+Use `--force` only for an intentional configured delivery test.
+
+## Known data limitations
+
+- Historical timestamps are not rewritten; Phase 1 establishes the UTC
+  convention for new writes and converts business boundaries/display to Cairo.
+- Legacy orders can have unknown store, price-tier, cost, and user attribution.
+- Gross profit is reported only where a reliable cost snapshot exists.
+- Employee performance remains hidden until attribution data is sufficiently
+  complete for meaningful reporting.

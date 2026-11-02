@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Staff' if staff_user else 'Add Staff' }} | Makhzoon{% endblock %}
+{% block content %}
+<section>
+<div class="page-header">
+<div>
+<p class="page-eyebrow">Access management</p>
+<h1>{{ 'Edit Staff account' if staff_user else 'Add Staff account' }}</h1>
+<p class="page-description">Staff can sell from assigned stores and cannot access costs, inventory management, or reports.</p>
+</div>
+</div>
+{% if errors %}<div class="alert alert-danger">Correct the highlighted fields and try again.</div>{% endif %}
+<div class="card product-form-card">
+<div class="card-body">
+<form method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="row g-3">
+<div class="col-12 col-md-6">
+<label class="form-label" for="staff-username">Display name *</label>
+<input class="form-control{% if errors.username %} is-invalid{% endif %}" id="staff-username" name="username" value="{{ values.username }}" maxlength="80" required>
+{% if errors.username %}<div class="invalid-feedback">{{ errors.username }}</div>{% endif %}
+</div>
+<div class="col-12 col-md-6">
+<label class="form-label" for="staff-email">Email *</label>
+<input class="form-control{% if errors.email %} is-invalid{% endif %}" id="staff-email" name="email" type="email" value="{{ values.email }}" maxlength="254" autocomplete="email" required>
+{% if errors.email %}<div class="invalid-feedback">{{ errors.email }}</div>{% endif %}
+</div>
+{% if not staff_user %}
+<div class="col-12 col-md-6">
+<label class="form-label" for="staff-password">Temporary password *</label>
+<input class="form-control{% if errors.password %} is-invalid{% endif %}" id="staff-password" name="password" type="password" minlength="{{ config.PASSWORD_MIN_LENGTH }}" autocomplete="new-password" required>
+{% if errors.password %}<div class="invalid-feedback">{{ errors.password }}</div>{% endif %}
+</div>
+<div class="col-12 col-md-6">
+<label class="form-label" for="staff-password-confirmation">Confirm password *</label>
+<input class="form-control{% if errors.password_confirmation %} is-invalid{% endif %}" id="staff-password-confirmation" name="password_confirmation" type="password" minlength="{{ config.PASSWORD_MIN_LENGTH }}" autocomplete="new-password" required>
+{% if errors.password_confirmation %}<div class="invalid-feedback">{{ errors.password_confirmation }}</div>{% endif %}
+</div>
+{% endif %}
+<div class="col-12">
+<fieldset>
+<legend class="form-label mb-2">Authorized stores *</legend>
+<div class="row g-2">
+{% for store in stores %}
+<div class="col-12 col-sm-6 col-lg-4">
+<div class="form-check border rounded p-3 ps-5 h-100">
+<input class="form-check-input" id="store-{{ store.id }}" name="store_ids" type="checkbox" value="{{ store.id }}" {% if store.id in values.store_ids %}checked{% endif %}>
+<label class="form-check-label" for="store-{{ store.id }}">{{ store.name }}</label>
+</div>
+</div>
+{% else %}
+<div class="col-12"><div class="alert alert-warning mb-0">Create an active store before adding Staff.</div></div>
+{% endfor %}
+</div>
+{% if errors.store_ids %}<div class="text-danger small mt-2">{{ errors.store_ids }}</div>{% endif %}
+</fieldset>
+</div>
+</div>
+<div class="form-actions">
+<button class="btn btn-primary" type="submit">{{ 'Save changes' if staff_user else 'Create Staff account' }}</button>
+<a class="btn btn-outline-secondary" href="{{ url_for('users') }}">Cancel</a>
+</div>
+</form>
+</div>
+</div>
+</section>
+{% endblock %}

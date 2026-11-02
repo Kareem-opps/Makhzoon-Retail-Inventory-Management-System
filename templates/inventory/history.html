@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} History | Makhzoon{% endblock %}
+{% block content %}
+<section>
+<div class="page-header">
+<div>
+<p class="page-eyebrow">Audit history</p>
+<h1>{{ product.name }}</h1>
+<p class="page-description">Chronological record of catalog, price, stock, sale, and cancellation events.</p>
+</div>
+<a class="btn btn-outline-secondary" href="{{ url_for('inventory') }}">Back to Inventory</a>
+</div>
+<div class="timeline">
+{% for event in events %}
+<article class="card content-card mb-3">
+<div class="card-body">
+<div class="d-flex flex-wrap justify-content-between gap-2">
+<div>
+<span class="badge text-bg-light">{{ event.event_type.replace('_',' ')|title }}</span>
+{% if event.store %}
+<span class="ms-2 text-muted">{{ event.store.name }}</span>
+{% endif %}
+</div>
+<time class="text-muted">{{ event.created_at|local_datetime }}</time>
+</div>
+<p class="mb-1 mt-3">{{ event.details }}</p>
+{% if event.old_quantity is not none %}
+<p class="mb-0 small">Quantity: {{ event.old_quantity }} → {{ event.new_quantity }} ({{ '%+d'|format(event.quantity_change) }})</p>
+{% endif %}
+{% if event.old_price is not none or event.new_price is not none %}
+<p class="mb-0 small">{{ event.price_field.replace('_',' ')|title }}: {% if event.old_price is not none %}EGP {{ event.old_price }} → {% endif %}EGP {{ event.new_price }}</p>
+{% endif %}
+{% if event.purchase_unit_cost is not none %}
+<p class="mb-0 small">Purchase unit cost: EGP {{ event.purchase_unit_cost }}</p>
+{% endif %}
+{% if event.order_id %}
+<a class="small" href="{{ url_for('order_details',order_id=event.order_id) }}">Related order #{{ event.order_id }}</a>
+{% endif %}
+</div>
+</article>
+{% else %}
+<div class="card content-card">
+<div class="card-body text-muted">No recorded history. This may be a legacy product.</div>
+</div>
+{% endfor %}
+</div>
+</section>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Reports | Makhzoon{% endblock %}
+{% block content %}
+<section>
+<div class="page-header">
+<div>
+<p class="page-eyebrow">Business intelligence</p>
+<h1>Reports & Recommendations</h1>
+<p class="page-description">Explainable analysis for {{ report.start.strftime('%d %b %Y') }} through {{ report.display_end.strftime('%d %b %Y') }}.</p>
+</div>
+<a class="btn btn-primary" href="{{ url_for('report_pdf',period=selected_period,start=selected_start,end=selected_end) }}">Download PDF</a>
+</div>
+<div class="card filter-panel">
+<div class="card-body">
+<form method="get">
+<div class="row g-3 align-items-end">
+<div class="col-12 col-md-4">
+<label class="form-label">Period</label>
+<select class="form-select" name="period" data-period-select>
+<option value="five_days" {% if selected_period=='five_days' %}selected{% endif %}>Last five days</option>
+<option value="current_month" {% if selected_period=='current_month' %}selected{% endif %}>Current month</option>
+<option value="previous_month" {% if selected_period=='previous_month' %}selected{% endif %}>Previous month</option>
+<option value="custom" {% if selected_period=='custom' %}selected{% endif %}>Custom</option>
+</select>
+</div>
+<div class="col-6 col-md-3">
+<label class="form-label">Start</label>
+<input class="form-control" type="date" name="start" value="{{ selected_start }}">
+</div>
+<div class="col-6 col-md-3">
+<label class="form-label">End</label>
+<input class="form-control" type="date" name="end" value="{{ selected_end }}">
+</div>
+<div class="col-12 col-md-2">
+<button class="btn btn-primary w-100">Analyze</button>
+</div>
+</div>
+</form>
+</div>
+</div>
+<div class="row g-3">
+{% for label,value in [('Revenue','EGP {:,.2f}'.format(report.summary.revenue)),('Units',report.summary.units),('Orders',report.summary.orders),('Average Order','EGP {:,.2f}'.format(report.summary.average_order_value))] %}
+<div class="col-6 col-xl-3">
+<div class="card kpi-card">
+<div class="card-body">
+<p class="kpi-label">{{ label }}</p>
+<p class="kpi-value">{{ value }}</p>
+</div>
+</div>
+</div>
+{% endfor %}
+</div>
+<div class="alert alert-light border mt-3 mb-0">Previous equivalent period revenue: <strong>EGP {{ '{:,.2f}'.format(report.previous.revenue) }}</strong>. {% if report.revenue_change_percent is not none %}Change: <strong>{{ '{:+.1f}'.format(report.revenue_change_percent) }}%</strong>.{% else %}A percentage comparison is unavailable because the previous period had no revenue.{% endif %}
+</div>
+<div class="row g-4 mt-1">
+<div class="col-12 col-xl-7">
+<div class="card content-card h-100">
+<div class="card-header section-card-header">
+<h2>Sales trend</h2>
+</div>
+<div class="card-body">
+<div class="report-bars">
+{% set peak = report.daily|map(attribute='revenue')|max if report.daily else 1 %}
+{% for row in report.daily %}
+<div class="report-bar-row">
+<span>{{ row.date.strftime('%d %b') }}</span>
+<div class="report-bar-track">
+<div class="report-bar" style="width: {{ (row.revenue / peak * 100) if peak else 0 }}%">
+</div>
+</div>
+<strong>EGP {{ '{:,.0f}'.format(row.revenue) }}</strong>
+</div>
+{% else %}
+<p class="text-muted">No sales in this period.</p>
+{% endfor %}
+</div>
+</div>
+</div>
+</div>
+<div class="col-12 col-xl-5">
+<div class="card content-card h-100">
+<div class="card-header section-card-header">
+<h2>Smart insights</h2>
+</div>
+<div class="card-body">
+{% for item in report.recommendations %}
+<div class="insight-card">
+<strong>{{ item.type }}</strong>
+<p>{{ item.message }}</p>
+</div>
+{% endfor %}
+</div>
+</div>
+</div>
+</div>
+<div class="row g-4 mt-1">
+<div class="col-12 col-xl-6">
+<div class="card content-card">
+<div class="card-header section-card-header">
+<h2>Store performance</h2>
+</div>
+<table class="table mb-0">
+<thead>
+<tr>
+<th>Store</th>
+<th>Units</th>
+<th>Available</th>
+<th>Revenue</th>
+</tr>
+</thead>
+<tbody>
+{% for row in report.stores %}
+<tr>
+<td>{{ row.name }}</td>
+<td>{{ row.units }}</td>
+<td>{{ row.stock if row.stock is not none else 'Unknown' }}</td>
+<td>EGP {{ '{:,.2f}'.format(row.revenue) }}</td>
+</tr>
+{% else %}
+<tr>
+<td colspan="4">No stores available.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+<div class="col-12 col-xl-6">
+<div class="card content-card">
+<div class="card-header section-card-header">
+<h2>Sales by tier</h2>
+</div>
+<table class="table mb-0">
+<thead>
+<tr>
+<th>Tier</th>
+<th>Units</th>
+<th>Revenue</th>
+</tr>
+</thead>
+<tbody>
+{% for row in report.tiers %}
+<tr>
+<td>{{ price_tier_labels.get(row.tier,'Legacy / Unknown') }}</td>
+<td>{{ row.units }}</td>
+<td>EGP {{ '{:,.2f}'.format(row.revenue) }}</td>
+</tr>
+{% else %}
+<tr>
+<td colspan="3">No sales.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="row g-4 mt-1">
+<div class="col-12 col-xl-6">
+<div class="card content-card">
+<div class="card-header section-card-header">
+<h2>Top products</h2>
+</div>
+<table class="table mb-0">
+<tbody>
+{% for row in report.top_products %}
+<tr>
+<td>{{ row.name }}</td>
+<td>{{ row.units }} units</td>
+<td>EGP {{ '{:,.2f}'.format(row.revenue) }}</td>
+</tr>
+{% else %}
+<tr>
+<td>No sales.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+<div class="col-12 col-xl-6">
+<div class="card content-card">
+<div class="card-header section-card-header">
+<h2>Zero-sales products</h2>
+</div>
+<div class="card-body">
+{% for row in report.zero_sales %}
+<span class="store-stock-chip">{{ row.name }} · {{ row.stock }} in stock</span>
+{% else %}
+<span class="text-muted">Every product sold in this period.</span>
+{% endfor %}
+</div>
+</div>
+</div>
+</div>
+<div class="alert alert-info mt-4">
+{% if report.summary.margin_percent is not none %}Known-cost gross margin: {{ '{:.1f}'.format(report.summary.margin_percent) }}%.{% else %}Gross profit is not confirmed because no selected sales have reliable purchase-cost snapshots.{% endif %} Employee performance is hidden until real employee attribution exists.</div>
+</section>
+{% endblock %}

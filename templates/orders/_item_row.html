@@ -1,0 +1,55 @@
+{% macro order_item_row(products, row) %}
+<div class="order-item-row" data-order-item-row>
+<div class="row g-3 align-items-start">
+<div class="col-12 col-lg-4">
+<label class="form-label">Product</label>
+<select class="form-select{% if row.errors.product_id %} is-invalid{% endif %}" name="product_id" data-product-select required>
+<option value="">Select a product</option>
+{% for product in products %}
+<option value="{{ product.id }}" data-wholesale="{{ product.wholesale_price }}" data-semi-wholesale="{{ product.semi_wholesale_price }}" data-retail="{{ product.retail_price }}" {% if product.id not in available_product_ids %}disabled{% endif %} {% if product.id|string == row.product_id %}selected{% endif %}>{{ product.name }}
+{% if product.id not in available_product_ids %} - Out of Stock{% endif %}
+</option>
+{% endfor %}
+</select>
+{% if row.errors.product_id %}
+<div class="invalid-feedback">{{ row.errors.product_id }}</div>
+{% endif %}
+</div>
+<div class="col-6 col-md-3 col-lg-2">
+<label class="form-label">Price tier</label>
+<select class="form-select{% if row.errors.price_tier %} is-invalid{% endif %}" name="price_tier" data-price-tier required>
+{% for value,label in price_tier_labels.items() %}
+<option value="{{ value }}" {% if value == row.price_tier %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+{% if row.errors.price_tier %}
+<div class="invalid-feedback">{{ row.errors.price_tier }}</div>
+{% endif %}
+</div>
+<div class="col-6 col-md-3 col-lg-1">
+<label class="form-label">Stock</label>
+<div class="order-preview-value" data-stock-preview>-</div>
+</div>
+<div class="col-6 col-md-3 col-lg-1">
+<label class="form-label">Quantity</label>
+<input class="form-control{% if row.errors.quantity %} is-invalid{% endif %}" name="quantity" type="number" value="{{ row.quantity }}" min="1" step="1" data-order-quantity required>
+{% if row.errors.quantity %}
+<div class="invalid-feedback">{{ row.errors.quantity }}</div>
+{% endif %}
+</div>
+<div class="col-6 col-md-3 col-lg-2">
+<label class="form-label">Unit price</label>
+<div class="order-preview-value" data-price-preview>-</div>
+</div>
+<div class="col-12 col-lg-2">
+<label class="form-label">Subtotal</label>
+<div class="d-flex gap-2">
+<div class="order-preview-value flex-grow-1" data-subtotal-preview>EGP 0.00</div>
+<button class="btn btn-outline-danger" type="button" data-remove-order-item>&times;</button>
+</div>
+<div class="order-stock-warning" data-stock-warning>
+</div>
+</div>
+</div>
+</div>
+{% endmacro %}

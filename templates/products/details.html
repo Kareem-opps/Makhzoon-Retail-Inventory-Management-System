@@ -1,81 +1,50 @@
 {% extends "base.html" %}
-
-{% block title %}{{ product.name }} | Retail Inventory System{% endblock %}
-
+{% block title %}{{ product.name }} | Makhzoon{% endblock %}
 {% block content %}
-<section aria-labelledby="product-details-heading">
-    <div class="page-header">
-        <div>
-            <p class="page-eyebrow">Product details</p>
-            <h1 id="product-details-heading">{{ product.name }}</h1>
-            <p class="page-description">
-                Review the stored product and inventory information.
-            </p>
-        </div>
-        <span class="badge product-detail-status {{ stock_status.badge_class }}">
-            {{ stock_status.label }}
-        </span>
-    </div>
-
-    <div class="card content-card product-details-card">
-        <div class="card-body">
-            <dl class="row product-detail-list">
-                <dt class="col-sm-4 col-lg-3">Product ID</dt>
-                <dd class="col-sm-8 col-lg-9">#{{ product.id }}</dd>
-
-                <dt class="col-sm-4 col-lg-3">Name</dt>
-                <dd class="col-sm-8 col-lg-9">{{ product.name }}</dd>
-
-                <dt class="col-sm-4 col-lg-3">Category</dt>
-                <dd class="col-sm-8 col-lg-9">{{ product.category }}</dd>
-
-                <dt class="col-sm-4 col-lg-3">Supplier</dt>
-                <dd class="col-sm-8 col-lg-9">{{ product.supplier }}</dd>
-
-                <dt class="col-sm-4 col-lg-3">Price</dt>
-                <dd class="col-sm-8 col-lg-9">EGP {{ "{:,.2f}".format(product.price) }}</dd>
-
-                <dt class="col-sm-4 col-lg-3">Quantity</dt>
-                <dd class="col-sm-8 col-lg-9">{{ product.quantity }}</dd>
-
-                <dt class="col-sm-4 col-lg-3">Reorder Level</dt>
-                <dd class="col-sm-8 col-lg-9">{{ product.reorder_level }}</dd>
-
-                <dt class="col-sm-4 col-lg-3">Stock Status</dt>
-                <dd class="col-sm-8 col-lg-9">
-                    <span class="badge {{ stock_status.badge_class }}">{{ stock_status.label }}</span>
-                </dd>
-
-                <dt class="col-sm-4 col-lg-3">Date Added</dt>
-                <dd class="col-sm-8 col-lg-9">
-                    {{ product.date_added.strftime("%d %b %Y, %H:%M") if product.date_added else "Not available" }}
-                </dd>
-            </dl>
-        </div>
-    </div>
-
-    <div class="detail-actions">
-        <a class="btn btn-outline-secondary" href="{{ url_for('products') }}">
-            <i class="bi bi-arrow-left" aria-hidden="true"></i>
-            Back
-        </a>
-        <a class="btn btn-primary" href="{{ url_for('edit_product', product_id=product.id) }}">
-            <i class="bi bi-pencil" aria-hidden="true"></i>
-            Edit
-        </a>
-        <button
-            class="btn btn-outline-danger"
-            type="button"
-            data-bs-toggle="modal"
-            data-bs-target="#deleteProductModal"
-            data-product-name="{{ product.name }}"
-            data-delete-url="{{ url_for('delete_product', product_id=product.id) }}"
-        >
-            <i class="bi bi-trash" aria-hidden="true"></i>
-            Delete
-        </button>
-    </div>
+<section>
+<div class="page-header">
+<div>
+<p class="page-eyebrow">Product details</p>
+<h1>{{ product.name }}</h1>
+<p class="page-description">Catalog, pricing, and store availability.</p>
+</div>
+<span class="badge {{ stock_status.badge_class }}">{{ stock_status.label }}</span>
+</div>
+<div class="row g-4">
+<div class="col-12 col-xl-7">
+<div class="card content-card">
+<div class="card-body p-4">
+<dl class="row product-detail-list">
+{% for label, value in [('Product ID','#' ~ product.id),('Category',product.category),('Supplier',product.supplier),('Purchase cost','EGP {:,.2f}'.format(product.purchase_price)),('Wholesale','EGP {:,.2f}'.format(product.wholesale_price)),('Semi-wholesale','EGP {:,.2f}'.format(product.semi_wholesale_price)),('Retail','EGP {:,.2f}'.format(product.retail_price)),('Total quantity',product.quantity),('Reorder level',product.reorder_level)] %}
+<dt class="col-sm-4">{{ label }}</dt>
+<dd class="col-sm-8">{{ value }}</dd>
+{% endfor %}
+</dl>
+</div>
+</div>
+</div>
+<div class="col-12 col-xl-5">
+<div class="card content-card">
+<div class="card-header section-card-header">
+<h2>Stock by store</h2>
+</div>
+<ul class="list-group list-group-flush">
+{% for row in product.store_inventories %}
+<li class="list-group-item d-flex justify-content-between">
+<span>{{ row.store.name }}</span>
+<strong>{{ row.quantity }}</strong>
+</li>
+{% else %}
+<li class="list-group-item text-muted">No store inventory recorded.</li>
+{% endfor %}
+</ul>
+</div>
+</div>
+</div>
+<div class="detail-actions">
+<a class="btn btn-outline-secondary" href="{{ url_for('products') }}">Back</a>
+<a class="btn btn-primary" href="{{ url_for('edit_product',product_id=product.id) }}">Edit</a>
+<a class="btn btn-outline-info" href="{{ url_for('product_history',product_id=product.id) }}">View History</a>
+</div>
 </section>
-
-{% include "products/_delete_modal.html" %}
 {% endblock %}

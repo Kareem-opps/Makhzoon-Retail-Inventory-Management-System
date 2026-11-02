@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Orders | Makhzoon{% endblock %}
+{% block content %}
+<section>
+<div class="page-header">
+<div>
+<p class="page-eyebrow">Sales history</p>
+<h1>Orders</h1>
+<p class="page-description">Review historical prices, tiers, stores, and status.</p>
+</div>
+<a class="btn btn-primary" href="{{ url_for('add_order') }}">Create Order</a>
+</div>
+<div class="card filter-panel">
+<div class="card-body">
+<form method="get">
+<div class="row g-3">
+<div class="col-8">
+<input class="form-control" name="search" value="{{ search }}" placeholder="Order ID or customer">
+</div>
+<div class="col-4">
+<select class="form-select" name="status">
+<option value="">All statuses</option>
+{% for status in order_statuses %}
+<option {% if status == selected_status %}selected{% endif %}>{{ status }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+</form>
+</div>
+</div>
+<div class="card content-card">
+<div class="table-responsive">
+<table class="table order-table mb-0">
+<thead>
+<tr>
+<th>Order</th>
+<th>Customer</th>
+<th>Store</th>
+<th>Date</th>
+<th>Status</th>
+<th>Lines</th>
+<th>Units</th>
+<th>Total</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+{% for order in orders %}
+<tr>
+<td>#{{ order.id }}</td>
+<td>{{ order.customer_name }}</td>
+<td>{{ order.store.name if order.store else 'Legacy / Unknown' }}</td>
+<td>{{ order.order_date|local_datetime }}</td>
+<td>
+<span class="badge {{ status_badges.get(order.status,'text-bg-secondary') }}">{{ order.status }}</span>
+</td>
+<td>{{ order.items|length }}</td>
+<td>{{ order.total_quantity }}</td>
+<td>EGP {{ '{:,.2f}'.format(order.get_total()) }}</td>
+<td>
+<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('order_details',order_id=order.id) }}">View</a>
+</td>
+</tr>
+{% else %}
+<tr>
+<td colspan="9" class="text-center py-5">
+{% if has_active_filters %}No matching orders{% else %}No orders yet{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</section>
+{% endblock %}
